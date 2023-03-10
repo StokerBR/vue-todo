@@ -1,21 +1,23 @@
 <script setup>
-    import {ref, onMounted} from 'vue';
+    import {ref, onMounted, computed} from 'vue';
     
     let todoItem = ref('');
     let items = ref([]);
+    const log = computed(() => console.log);
     
     //Adds a new ToDo item if value is not empty
     function addTodoItem() {
         if (todoItem.value === '') return;
         items.value.unshift({
             name: todoItem.value,
+            id: Date.now(),
         });
         todoItem.value = '';
     }
     
     //Toggles the checkbox and moves the item to the top or bottom of the list
     function toggleCheck(index) {
-        let checked = !items.value[index]['checked']
+        let checked = !items.value[index]['checked'];
         let item = items.value.splice(index, 1)[0];
         item.checked = checked;
         
@@ -25,7 +27,6 @@
         } else {
             items.value.unshift(item);
         }
-        
     }
     
 </script>
@@ -42,20 +43,23 @@
             
             <div class="list">
                 
-                <ul>
-                    <li v-for="(item, index) in items" :key="index" @click="toggleCheck(index)">
+                <transition-group tag="ul" name="list" appear>
+                    
+                    <li v-for="(item, index) in items" :key="item.id" @click="toggleCheck(index)">
                         
-                        <div class="checkbox-wrapper">
-                            <input :id="('checkbox-'+index)" type="checkbox" :checked="item.checked" @change="toggleCheck(index)">
-                            <label :for="('checkbox-'+index)">{{ item.name }}</label>
-                        </div>
+                        <label :class="['checkbox-container', {'checked': item.checked}]">
+                            {{ item.name }}
+                            <input type="checkbox" :checked="item.checked" disabled>
+                            <span class="checkmark"></span>
+                        </label>
                         
                     </li>
-                </ul>
+                    
+                </transition-group>
                 
             </div>
             
-            <p>StokerBR's ToDo List</p>
+            <p v-if="!items.length">StokerBR's ToDo List</p>
             
         </div>
         
@@ -66,6 +70,7 @@
 <style lang="scss" scoped>
     @import '@/assets/scss/variables.scss';
     @import '@/assets/scss/checkbox.scss';
+    @import 'animate.css';
     
     input.add-item {
         width: calc(100% - 40px);
@@ -126,6 +131,33 @@
         text-align:center;
         padding: 30px 0;
         color: gray;
+    }
+
+    /* .list-enter-from {
+        opacity: 0;
+        transform: scale(0.5);
+    }
+
+    .list-enter-to {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    .list-enter-active {
+        transition: all 0.2s ease;
+    } */
+    
+    .list-enter-active {
+        animation: fadeInDown 0.2s;
+    }
+    
+    .list-leave-active {
+        animation: zoomOut 0.2s;
+        position: absolute;
+    }
+    
+    .list-move {
+        transition: all 0.2s ease;
     }
     
 </style>
