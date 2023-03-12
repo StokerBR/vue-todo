@@ -12,6 +12,7 @@ import Todo from './components/Todo.vue';
     @import '@/assets/scss/variables.scss';
     @import url('https://fonts.cdnfonts.com/css/inter');
     @import url('https://fonts.cdnfonts.com/css/mona-sans');
+    @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.3.0/css/all.min.css');
 
     body {
         background-color: $black;

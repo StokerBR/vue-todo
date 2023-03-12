@@ -1,25 +1,57 @@
 <script setup>
     import {ref, onMounted, computed} from 'vue';
+    import {useVuelidate} from '@vuelidate/core';
+    import {required, minLength, maxLength, helpers} from '@vuelidate/validators';
     
-    let todoItem = ref('');
-    let items = ref([]);
+    const todoItem = ref('');
+    const items = ref([]);
     const log = computed(() => console.log);
     
-    //Adds a new ToDo item if value is not empty
-    function addTodoItem() {
-        if (todoItem.value === '') return;
-        items.value.unshift({
-            name: todoItem.value,
-            id: Date.now(),
-        });
-        todoItem.value = '';
+    //Checks if value is unique in the list
+    const unique = (value) => {
+        return !items.value.some(item => item.name === value);
     }
     
-    //Toggles the checkbox and moves the item to the top or bottom of the list
-    function toggleCheck(index) {
-        let checked = !items.value[index]['checked'];
+    //Validation rules
+    const rules = computed(() => ({
+        todoItem: {
+            required,
+            minLength: minLength(3),
+            maxLength: maxLength(20),
+            unique: helpers.withMessage('This item already exists', unique)
+        }
+    }));
+    
+    //Vuelidate instance
+    const v$ = useVuelidate(rules, {todoItem});
+    
+    //Adds a new ToDo item if value is valid
+    async function addTodoItem() {
+        const isValid = await v$.value.$validate();
+        
+        if (isValid) {
+            
+            items.value.unshift({
+                name: todoItem.value,
+                id: Date.now(),
+            });
+            
+            todoItem.value = '';
+            v$.value.$reset();
+            
+        }
+        
+    }
+    
+    //Handles the checkbox change
+    function handleCheck(index, toggle = false) {
         let item = items.value.splice(index, 1)[0];
-        item.checked = checked;
+        let checked = item.checked;
+
+        if (toggle) {
+            checked = !checked;
+            item.checked = checked;
+        }
         
         //If checked, move to bottom of list, otherwise move to top
         if (checked) {
@@ -27,6 +59,7 @@
         } else {
             items.value.unshift(item);
         }
+        
     }
     
 </script>
@@ -38,20 +71,27 @@
         <div class="holder">
             
             <form @submit.prevent="addTodoItem">
-                <input type="text" class="add-item" placeholder="Add an item" v-model="todoItem">
+                <input type="text" class="add-item" placeholder="Add an item" v-model="todoItem" maxlength="20">
+                <span class="input-error" v-if="v$.todoItem.$error">{{ v$.todoItem.$errors[0].$message }}</span>
             </form>
             
             <div class="list">
                 
                 <transition-group tag="ul" name="list" appear>
                     
-                    <li v-for="(item, index) in items" :key="item.id" @click="toggleCheck(index)">
+                    <li v-for="(item, index) in items" :key="item.id" @click="handleCheck(index, true)">
                         
-                        <label :class="['checkbox-container', {'checked': item.checked}]">
-                            {{ item.name }}
-                            <input type="checkbox" :checked="item.checked" disabled>
-                            <span class="checkmark"></span>
-                        </label>
+                        <div class="label-wrapper">
+                            <label :class="['checkbox-container', {'checked': item.checked}]" @click.stop>
+                                <span class="text" :title="item.name">{{ item.name }}</span>
+                                <input type="checkbox" :checked="item.checked" v-model="item.checked" @change="handleCheck(index)">
+                                <span class="checkmark" @click.stop></span>
+                            </label>
+                        </div>
+                        
+                        <button type="button" class="remove" @click.stop="() => {items.splice(index, 1)}">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
                         
                     </li>
                     
@@ -78,10 +118,9 @@
         padding: 20px;
         font-size: 1.3em;
         background-color: $black-mute;
-        color: $text-light;
+        color: $white;
         
         &:focus {
-            color: $white;
             outline: none;
         }
         
@@ -120,7 +159,39 @@
                 display: flex;
                 flex-direction: row;
                 align-items: center;
-                justify-content: flex-start;
+                
+                .label-wrapper {
+                    width: calc(100% - 40px);
+                    
+                    .text {
+                        overflow: hidden;
+                        white-space: nowrap;
+                        text-overflow: ellipsis;
+                        word-break: break-all;
+                        word-wrap: break-word;
+                    }
+                    
+                }
+                
+                .remove {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    margin-left: auto;
+                    width: 30px;
+                    height: 30px;
+                    border: none;
+                    border-radius: 50%;
+                    background-color: $black;
+                    color: $text-light-2;
+                    cursor: pointer;
+                    
+                    &:hover {
+                        background-color: $black-mute;
+                    }
+                    
+                }
+                
             }
             
         }
@@ -153,11 +224,27 @@
     
     .list-leave-active {
         animation: zoomOut 0.2s;
-        position: absolute;
+        // position: absolute;
     }
     
     .list-move {
         transition: all 0.2s ease;
+    }
+    
+    form {
+        position: relative;
+    }
+    
+    .input-error {
+        background-color: $error;
+        color: $white;
+        font-weight: 600;
+        font-size: 12px;
+        padding: 5px;
+        position: absolute;
+        left: 0;
+        bottom: -10px;
+        z-index: 2;
     }
     
 </style>
