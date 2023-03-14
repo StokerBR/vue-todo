@@ -66,42 +66,38 @@
 
 <template>
     
-    <div class="container">
+    <div class="holder">
         
-        <div class="holder">
+        <form @submit.prevent="addTodoItem">
+            <input type="text" class="add-item" placeholder="Add an item" v-model="todoItem" maxlength="20">
+            <span class="input-error" v-if="v$.todoItem.$error">{{ v$.todoItem.$errors[0].$message }}</span>
+        </form>
+        
+        <div class="list">
             
-            <form @submit.prevent="addTodoItem">
-                <input type="text" class="add-item" placeholder="Add an item" v-model="todoItem" maxlength="20">
-                <span class="input-error" v-if="v$.todoItem.$error">{{ v$.todoItem.$errors[0].$message }}</span>
-            </form>
-            
-            <div class="list">
+            <transition-group tag="ul" name="list" appear>
                 
-                <transition-group tag="ul" name="list" appear>
+                <li v-for="(item, index) in items" :key="item.id" @click="handleCheck(index, true)">
                     
-                    <li v-for="(item, index) in items" :key="item.id" @click="handleCheck(index, true)">
-                        
-                        <div class="label-wrapper">
-                            <label :class="['checkbox-container', {'checked': item.checked}]" @click.stop>
-                                <span class="text" :title="item.name">{{ item.name }}</span>
-                                <input type="checkbox" :checked="item.checked" v-model="item.checked" @change="handleCheck(index)">
-                                <span class="checkmark" @click.stop></span>
-                            </label>
-                        </div>
-                        
-                        <button type="button" class="remove" @click.stop="() => {items.splice(index, 1)}">
-                            <i class="fa-solid fa-trash"></i>
-                        </button>
-                        
-                    </li>
+                    <div class="label-wrapper">
+                        <label :class="['checkbox-container', {'checked': item.checked}]" @click.stop>
+                            <span class="text" :title="item.name">{{ item.name }}</span>
+                            <input type="checkbox" :checked="item.checked" v-model="item.checked" @change="handleCheck(index)">
+                            <span class="checkmark" @click.stop></span>
+                        </label>
+                    </div>
                     
-                </transition-group>
+                    <button type="button" class="remove" @click.stop="() => {items.splice(index, 1)}">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                    
+                </li>
                 
-            </div>
-            
-            <p v-if="!items.length">StokerBR's ToDo List</p>
+            </transition-group>
             
         </div>
+        
+        <p v-if="!items.length">StokerBR's ToDo List</p>
         
     </div>
         
@@ -124,11 +120,6 @@
             outline: none;
         }
         
-    }
-    
-    .container {
-        padding: 40px 0;
-        max-height: calc(100% - 80px);
     }
     
     .holder {
