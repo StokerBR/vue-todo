@@ -23,9 +23,7 @@ import Todo from './components/Todo.vue';
 
     body {
         background-color: $black;
-        // font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
         font-family: 'Mona-Sans', sans-serif;
-        // font-family: 'Inter', sans-serif;
         font-weight: 500;
         display: flex;
         justify-content: center;

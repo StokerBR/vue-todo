@@ -4,8 +4,9 @@
     import {required, minLength, maxLength, helpers} from '@vuelidate/validators';
     
     const todoItem = ref('');
-    const items = ref([]);
-    const log = computed(() => console.log);
+    
+    const prevItems = JSON.parse(localStorage.getItem("todoItems") || '[]'); //Gets items from local storage or empty array if none
+    const items = ref(prevItems);
     
     //Checks if value is unique in the list
     const unique = (value) => {
@@ -25,6 +26,11 @@
     //Vuelidate instance
     const v$ = useVuelidate(rules, {todoItem});
     
+    //Updates local storage when items change
+    function updateStorage() {
+        localStorage.setItem("todoItems", JSON.stringify(items.value));
+    }
+    
     //Adds a new ToDo item if value is valid
     async function addTodoItem() {
         const isValid = await v$.value.$validate();
@@ -35,6 +41,8 @@
                 name: todoItem.value,
                 id: Date.now(),
             });
+            
+            updateStorage();
             
             todoItem.value = '';
             v$.value.$reset();
@@ -60,6 +68,14 @@
             items.value.unshift(item);
         }
         
+        updateStorage();
+        
+    }
+    
+    //Removes a ToDo item
+    function removeTodoItem(index) {
+        items.value.splice(index, 1);
+        updateStorage();
     }
     
 </script>
@@ -87,7 +103,7 @@
                         </label>
                     </div>
                     
-                    <button type="button" class="remove" @click.stop="() => {items.splice(index, 1)}">
+                    <button type="button" class="remove" @click.stop="removeTodoItem(index)">
                         <i class="fa-solid fa-trash"></i>
                     </button>
                     
@@ -215,7 +231,6 @@
     
     .list-leave-active {
         animation: zoomOut 0.2s;
-        // position: absolute;
     }
     
     .list-move {
